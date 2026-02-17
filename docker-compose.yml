@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: servesync_app
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - db
+    networks:
+      - servesync
+
+  web:
+    image: nginx:alpine
+    container_name: servesync_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./docker/nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - servesync
+
+  db:
+    image: mysql:8.0
+    container_name: servesync_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: servesync
+      MYSQL_USER: servesync
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3307:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - servesync
+
+  redis:
+    image: redis:alpine
+    container_name: servesync_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - servesync
+
+networks:
+  servesync:
+
+volumes:
+  dbdata:
